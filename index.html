@@ -183,11 +183,12 @@ input:checked+.tslider::before{transform:translateX(18px)}
   background:var(--bg);border:0.5px solid var(--border2);
   border-radius:var(--r);color:var(--text);outline:none;
 }
-.ledger-add-row input[type=month]{
+.ledger-add-row input[type=date]{
   flex:1;font-size:15px;padding:8px 10px;
   background:var(--bg);border:0.5px solid var(--border2);
   border-radius:var(--r);color:var(--text);outline:none;
 }
+.ledger-entry .e-date{font-size:11px;color:var(--text3);flex-shrink:0}
 .btn-add{
   font-size:15px;padding:8px 16px;border-radius:var(--r);
   border:none;background:var(--green);color:white;cursor:pointer;
@@ -347,7 +348,7 @@ input:checked+.tslider::before{transform:translateX(18px)}
     <input type="text" id="l-desc" placeholder="Description (e.g. gardening, family trip)" maxlength="60">
     <div class="ledger-add-row">
       <input type="number" id="l-amt" inputmode="decimal" placeholder="Amount">
-      <input type="month" id="l-month">
+      <input type="date" id="l-month">
       <button class="btn-add" onclick="addEntry()">Add</button>
     </div>
   </div>
@@ -439,8 +440,8 @@ function monthData(ym) {
   const wants = S.gas + S.takeout + S.beauty + S.clothes + S.charity + S.misc;
   const fixedExp = bk + needs + wants;
 
-  const extras = ledger.filter(e => e.month === ym).reduce((s,e) => s+e.amt, 0);
-  const extraItems = ledger.filter(e => e.month === ym);
+  const extras = ledger.filter(e => entryMonth(e) === ym).reduce((s,e) => s+e.amt, 0);
+  const extraItems = ledger.filter(e => entryMonth(e) === ym);
   const totalExp = fixedExp + extras;
   const net = totalIncome - totalExp;
   const savings = Math.max(0, Math.min(S.saveAmt, net));
@@ -624,16 +625,19 @@ function toggleCfCard(header) {
 function addEntry() {
   const desc = document.getElementById('l-desc').value.trim();
   const amt  = parseFloat(document.getElementById('l-amt').value);
-  const month = document.getElementById('l-month').value;
-  if (!desc || !amt || !month) { return; }
-  ledger.push({ id: Date.now(), desc, amt, month });
-  ledger.sort((a,b) => a.month.localeCompare(b.month));
+  const date = document.getElementById('l-month').value;
+  if (!desc || !amt || !date) { return; }
+  ledger.push({ id: Date.now(), desc, amt, date });
+  ledger.sort((a,b) => entryDate(a).localeCompare(entryDate(b)));
   saveLedger();
   document.getElementById('l-desc').value = '';
   document.getElementById('l-amt').value  = '';
   renderLedger();
   calcBudget();
 }
+
+function entryDate(e) { return e.date || (e.month + '-01'); }
+function entryMonth(e) { return entryDate(e).slice(0, 7); }
 
 function deleteEntry(id) {
   ledger = ledger.filter(e => e.id !== id);
@@ -644,7 +648,7 @@ function deleteEntry(id) {
 
 function renderLedger() {
   const curYm = ymNow();
-  const curTotal = ledger.filter(e => e.month === curYm).reduce((s,e) => s+e.amt, 0);
+  const curTotal = ledger.filter(e => entryMonth(e) === curYm).reduce((s,e) => s+e.amt, 0);
   const note = document.getElementById('ledger-note');
   if (curTotal > 0) {
     note.textContent = `This month's one-time expenses (${fmt(curTotal)}) are included in your budget summary.`;
@@ -660,19 +664,23 @@ function renderLedger() {
   }
 
   const groups = {};
-  ledger.forEach(e => { if (!groups[e.month]) groups[e.month] = []; groups[e.month].push(e); });
+  ledger.forEach(e => { const m = entryMonth(e); if (!groups[m]) groups[m] = []; groups[m].push(e); });
 
   list.innerHTML = Object.keys(groups).sort().map(ym => {
     const total = groups[ym].reduce((s,e) => s+e.amt, 0);
     const isCur = ym === curYm;
     const isPast = ym < curYm;
-    const items = groups[ym].map(e => `
+    const items = groups[ym].map(e => {
+      const d = entryDate(e);
+      const dayLabel = new Date(d + 'T00:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'});
+      return `
       <div class="ledger-entry">
+        <span class="e-date">${dayLabel}</span>
         <span class="e-desc" style="${isPast ? 'color:var(--text2)' : ''}">${e.desc}</span>
         <span class="e-amt">${fmt(e.amt)}</span>
         <button class="e-del" onclick="deleteEntry(${e.id})">remove</button>
       </div>
-    `).join('');
+    `}).join('');
 
     return `
       <div class="ledger-group">
@@ -775,8 +783,8 @@ bindInput('s-misc',     'misc',      'num');
 bindInput('s-renogoal', 'renoGoal',  'num');
 bindInput('s-saveamt',  'saveAmt',   'num');
 
-// Set ledger month default
-document.getElementById('l-month').value = ymNow();
+// Set ledger date default to today
+document.getElementById('l-month').value = new Date().toISOString().slice(0,10);
 
 // Header month
 document.getElementById('hdr-month').textContent = new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
