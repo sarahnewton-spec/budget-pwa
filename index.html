@@ -213,6 +213,23 @@ input:checked+.tslider::before{transform:translateX(18px)}
 .ledger-this-note{font-size:12px;color:var(--amber-text);padding:10px 14px;background:var(--amber-bg);border-radius:var(--r);margin-bottom:10px;display:none}
 .ledger-this-note.show{display:block}
 
+/* Login screen */
+.login-screen{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px}
+.login-screen.hidden{display:none}
+.login-logo{width:56px;height:56px;background:var(--green);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+.login-logo svg{width:28px;height:28px;stroke:white;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.login-screen h2{font-size:22px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.login-screen p{font-size:14px;color:var(--text2);margin-bottom:28px;text-align:center}
+.login-input{width:100%;max-width:320px;font-size:16px;padding:12px 14px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--r);color:var(--text);outline:none;margin-bottom:12px}
+.login-btn{width:100%;max-width:320px;font-size:15px;padding:12px;border-radius:var(--r);border:none;background:var(--green);color:white;cursor:pointer;font-family:inherit;font-weight:500}
+.login-btn:active{opacity:.85}
+.login-msg{font-size:13px;color:var(--green-text);margin-top:12px;text-align:center;display:none}
+.login-msg.show{display:block}
+.login-err{font-size:13px;color:var(--red-text);margin-top:12px;text-align:center;display:none}
+.login-err.show{display:block}
+/* Logout btn */
+.logout-btn{font-size:12px;padding:3px 10px;border-radius:20px;border:0.5px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}
+
 /* iOS install hint */
 .install-hint{font-size:12px;color:var(--text2);text-align:center;padding:8px 16px;background:var(--bg2);border-radius:var(--r);margin-bottom:14px;display:none}
 .install-hint.show{display:block}
@@ -223,7 +240,21 @@ input:checked+.tslider::before{transform:translateX(18px)}
 <header>
   <h1>Budget Planner</h1>
   <span class="month-badge" id="hdr-month"></span>
+  <button class="logout-btn" id="logout-btn" onclick="signOut()" style="display:none">Sign out</button>
 </header>
+
+<!-- Login screen -->
+<div class="login-screen" id="login-screen">
+  <div class="login-logo">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+  </div>
+  <h2>Budget Planner</h2>
+  <p>Enter your email to get a magic sign-in link</p>
+  <input class="login-input" type="email" id="login-email" placeholder="you@example.com" inputmode="email" autocomplete="email">
+  <button class="login-btn" onclick="sendMagicLink()">Send magic link</button>
+  <div class="login-msg" id="login-msg">Check your email — link sent!</div>
+  <div class="login-err" id="login-err"></div>
+</div>
 
 <main id="main-scroll">
 
@@ -373,6 +404,7 @@ input:checked+.tslider::before{transform:translateX(18px)}
   </button>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 // ── Service worker ─────────────────────────────────────────
@@ -380,11 +412,37 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 
-// ── iOS install hint ───────────────────────────────────────
-const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-if (isIOS && !isStandalone) {
-  document.getElementById('ios-hint').classList.add('show');
+// ── Supabase ───────────────────────────────────────────────
+const SUPA_URL = 'https://jtepdcmgrbowevndvaco.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0ZXBkY21ncmJvd2V2bmR2YWNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1OTg1NDEsImV4cCI6MjA5MjE3NDU0MX0.CSKQJcemkANa_uc6_AK4WLYYFPbaUrWLVW-iTHqxM0I';
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+async function sendMagicLink() {
+  const email = document.getElementById('login-email').value.trim();
+  const msg = document.getElementById('login-msg');
+  const err = document.getElementById('login-err');
+  msg.classList.remove('show'); err.classList.remove('show');
+  if (!email) return;
+  const { error } = await supa.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin + window.location.pathname } });
+  if (error) { err.textContent = error.message; err.classList.add('show'); }
+  else { msg.classList.add('show'); }
+}
+
+async function signOut() {
+  await supa.auth.signOut();
+}
+
+function showApp(user) {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('logout-btn').style.display = '';
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (isIOS && !isStandalone) document.getElementById('ios-hint').classList.add('show');
+}
+
+function showLogin() {
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('logout-btn').style.display = 'none';
 }
 
 // ── Default settings ───────────────────────────────────────
@@ -402,13 +460,33 @@ let S = {};
 let ledger = [];
 let cfChart = null;
 
-function loadState() {
-  try { S = { ...DEFAULTS, ...JSON.parse(localStorage.getItem('bgt-settings') || '{}') }; } catch(e) { S = { ...DEFAULTS }; }
-  try { ledger = JSON.parse(localStorage.getItem('bgt-ledger') || '[]'); } catch(e) { ledger = []; }
+async function loadState() {
+  const { data: { user } } = await supa.auth.getUser();
+  if (!user) return;
+  const { data: sr } = await supa.from('settings').select('data').eq('user_id', user.id).maybeSingle();
+  S = { ...DEFAULTS, ...(sr?.data || {}) };
+  const { data: lr } = await supa.from('ledger').select('*').eq('user_id', user.id);
+  ledger = (lr || []).map(r => ({ id: r.id, description: r.description, amt: Number(r.amt), date: r.date }));
+  ledger.sort((a,b) => entryDate(a).localeCompare(entryDate(b)));
 }
 
-function saveSettings() { localStorage.setItem('bgt-settings', JSON.stringify(S)); }
-function saveLedger()   { localStorage.setItem('bgt-ledger',   JSON.stringify(ledger)); }
+async function saveSettings() {
+  const { data: { user } } = await supa.auth.getUser();
+  if (!user) return;
+  supa.from('settings').upsert({ user_id: user.id, data: S }).then(() => {});
+}
+
+async function saveLedgerEntry(entry) {
+  const { data: { user } } = await supa.auth.getUser();
+  if (!user) return;
+  await supa.from('ledger').upsert({ id: entry.id, user_id: user.id, description: entry.description, amt: entry.amt, date: entry.date });
+}
+
+async function deleteLedgerEntry(id) {
+  const { data: { user } } = await supa.auth.getUser();
+  if (!user) return;
+  await supa.from('ledger').delete().eq('id', id).eq('user_id', user.id);
+}
 
 // ── Helpers ────────────────────────────────────────────────
 const fmt  = n => '$' + Math.round(n).toLocaleString();
@@ -574,7 +652,7 @@ function renderCashFlow() {
     card.className = 'cf-card';
 
     const extraRows = m.extraItems.map(e =>
-      `<div class="cf-extra-item"><span>${e.desc}</span><span class="amt">-${fmt(e.amt)}</span></div>`
+      `<div class="cf-extra-item"><span>${e.description}</span><span class="amt">-${fmt(e.amt)}</span></div>`
     ).join('');
 
     const extrasSection = m.extraItems.length > 0 ? `
@@ -622,28 +700,29 @@ function toggleCfCard(header) {
 }
 
 // ── Ledger ─────────────────────────────────────────────────
-function addEntry() {
-  const desc = document.getElementById('l-desc').value.trim();
+async function addEntry() {
+  const description = document.getElementById('l-desc').value.trim();
   const amt  = parseFloat(document.getElementById('l-amt').value);
   const date = document.getElementById('l-month').value;
-  if (!desc || !amt || !date) { return; }
-  ledger.push({ id: Date.now(), desc, amt, date });
+  if (!description || !amt || !date) { return; }
+  const entry = { id: Date.now(), description, amt, date };
+  ledger.push(entry);
   ledger.sort((a,b) => entryDate(a).localeCompare(entryDate(b)));
-  saveLedger();
   document.getElementById('l-desc').value = '';
   document.getElementById('l-amt').value  = '';
   renderLedger();
   calcBudget();
+  await saveLedgerEntry(entry);
 }
 
 function entryDate(e) { return e.date || (e.month + '-01'); }
 function entryMonth(e) { return entryDate(e).slice(0, 7); }
 
-function deleteEntry(id) {
+async function deleteEntry(id) {
   ledger = ledger.filter(e => e.id !== id);
-  saveLedger();
   renderLedger();
   calcBudget();
+  await deleteLedgerEntry(id);
 }
 
 function renderLedger() {
@@ -676,7 +755,7 @@ function renderLedger() {
       return `
       <div class="ledger-entry">
         <span class="e-date">${dayLabel}</span>
-        <span class="e-desc" style="${isPast ? 'color:var(--text2)' : ''}">${e.desc}</span>
+        <span class="e-desc" style="${isPast ? 'color:var(--text2)' : ''}">${e.description}</span>
         <span class="e-amt">${fmt(e.amt)}</span>
         <button class="e-del" onclick="deleteEntry(${e.id})">remove</button>
       </div>
@@ -761,38 +840,51 @@ document.querySelectorAll('.pill').forEach(p => {
 });
 
 // ── Init ───────────────────────────────────────────────────
-loadState();
+function bindAllInputs() {
+  bindInput('s-salary',   'salary',    'num');
+  bindInput('s-quota',    'quotaItems','range');
+  bindInput('s-commtax',  'commTaxRate','num');
+  bindInput('s-bizon',    'bizOn',     'check');
+  bindInput('s-biz',      'bizIncome', 'range');
+  bindInput('s-bizstart', 'bizStart',  'month');
+  bindInput('s-nannyon',  'nannyOn',   'check');
+  bindInput('s-nannydays','nannyDays', 'range');
+  bindInput('s-bk',       'bk',        'num');
+  bindInput('s-grocer',   'grocer',    'num');
+  bindInput('s-gas',      'gas',       'num');
+  bindInput('s-takeout',  'takeout',   'num');
+  bindInput('s-beauty',   'beauty',    'num');
+  bindInput('s-clothes',  'clothes',   'num');
+  bindInput('s-charity',  'charity',   'num');
+  bindInput('s-misc',     'misc',      'num');
+  bindInput('s-renogoal', 'renoGoal',  'num');
+  bindInput('s-saveamt',  'saveAmt',   'num');
+}
 
-// Bind all inputs
-bindInput('s-salary',   'salary',    'num');
-bindInput('s-quota',    'quotaItems','range');
-bindInput('s-commtax',  'commTaxRate','num');
-bindInput('s-bizon',    'bizOn',     'check');
-bindInput('s-biz',      'bizIncome', 'range');
-bindInput('s-bizstart', 'bizStart',  'month');
-bindInput('s-nannyon',  'nannyOn',   'check');
-bindInput('s-nannydays','nannyDays', 'range');
-bindInput('s-bk',       'bk',        'num');
-bindInput('s-grocer',   'grocer',    'num');
-bindInput('s-gas',      'gas',       'num');
-bindInput('s-takeout',  'takeout',   'num');
-bindInput('s-beauty',   'beauty',    'num');
-bindInput('s-clothes',  'clothes',   'num');
-bindInput('s-charity',  'charity',   'num');
-bindInput('s-misc',     'misc',      'num');
-bindInput('s-renogoal', 'renoGoal',  'num');
-bindInput('s-saveamt',  'saveAmt',   'num');
+async function initApp() {
+  await loadState();
+  bindAllInputs();
+  document.getElementById('l-month').value = new Date().toISOString().slice(0,10);
+  document.getElementById('hdr-month').textContent = new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  onSettingChange();
+  renderLedger();
+  calcBudget();
+}
 
-// Set ledger date default to today
-document.getElementById('l-month').value = new Date().toISOString().slice(0,10);
+supa.auth.onAuthStateChange(async (event, session) => {
+  if (session) {
+    showApp(session.user);
+    await initApp();
+  } else {
+    showLogin();
+  }
+});
 
-// Header month
-document.getElementById('hdr-month').textContent = new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
-
-// Initial render
-onSettingChange();
-renderLedger();
-calcBudget();
+// Check session on load
+supa.auth.getSession().then(({ data: { session } }) => {
+  if (session) { showApp(session.user); initApp(); }
+  else { showLogin(); }
+});
 </script>
 </body>
 </html>
