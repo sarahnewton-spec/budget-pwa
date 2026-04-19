@@ -57,7 +57,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;p
 nav{
   position:fixed;bottom:0;left:0;right:0;z-index:100;
   background:var(--bg);border-top:0.5px solid var(--border);
-  display:grid;grid-template-columns:repeat(3,1fr);
+  display:grid;grid-template-columns:repeat(4,1fr);
   padding-bottom:var(--safe-b);height:calc(var(--nav-h) + var(--safe-b));
 }
 .nav-btn{
@@ -230,6 +230,43 @@ input:checked+.tslider::before{transform:translateX(18px)}
 /* Logout btn */
 .logout-btn{font-size:12px;padding:3px 10px;border-radius:20px;border:0.5px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}
 
+/* ===== TRANSACTIONS TAB ===== */
+.txn-compare-row{display:flex;flex-direction:column;gap:3px;padding:10px 0;border-bottom:0.5px solid var(--border)}
+.txn-compare-row:last-child{border-bottom:none}
+.txn-compare-header{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.txn-compare-header .cat-name{color:var(--text);font-weight:500}
+.txn-compare-header .cat-amounts{font-size:12px;color:var(--text2)}
+.txn-compare-bar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.txn-compare-fill{height:100%;border-radius:3px;transition:width .3s}
+.pending-card{background:var(--bg2);border-radius:var(--rl);padding:14px;margin-bottom:10px;border:0.5px solid var(--border)}
+.pending-card .p-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.pending-card .p-merchant{font-size:14px;font-weight:500;color:var(--text);flex:1;min-width:0;padding-right:8px}
+.pending-card .p-amt{font-size:15px;font-weight:600;color:var(--red-text);flex-shrink:0}
+.pending-card .p-meta{font-size:11px;color:var(--text3);margin-bottom:10px}
+.pending-card .p-actions{display:flex;gap:8px;align-items:center}
+.cat-select{flex:1;font-size:14px;padding:7px 8px;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--r);color:var(--text);outline:none;font-family:inherit}
+.btn-approve{font-size:13px;padding:7px 14px;border-radius:var(--r);border:none;background:var(--green);color:white;cursor:pointer;font-family:inherit;font-weight:500;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.btn-exclude{font-size:13px;padding:7px 10px;border-radius:var(--r);border:0.5px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:inherit;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.rule-prompt{font-size:12px;color:var(--green-text);background:var(--green-bg);padding:8px 12px;border-radius:var(--r);margin-top:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.rule-prompt .rp-yes{font-size:12px;padding:4px 10px;border-radius:20px;border:none;background:var(--green);color:white;cursor:pointer;font-family:inherit;flex-shrink:0}
+.rule-prompt .rp-no{font-size:12px;color:var(--text2);cursor:pointer;flex-shrink:0}
+.txn-cat-group{margin-bottom:12px}
+.txn-cat-header{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;padding-bottom:5px;border-bottom:0.5px solid var(--border);margin-bottom:4px;display:flex;justify-content:space-between}
+.txn-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:13px}
+.txn-row:last-child{border-bottom:none}
+.txn-row .t-date{font-size:11px;color:var(--text3);flex-shrink:0;width:44px}
+.txn-row .t-name{flex:1;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.txn-row .t-amt{font-weight:500;color:var(--text);flex-shrink:0}
+.rules-list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.rule-row{display:flex;align-items:center;gap:8px;font-size:13px;padding:8px 10px;background:var(--bg2);border-radius:var(--r)}
+.rule-row .r-pattern{flex:1;color:var(--text)}
+.rule-row .r-cat{font-size:12px;color:var(--text2)}
+.rule-row .r-del{font-size:11px;color:var(--text3);cursor:pointer;padding:3px 8px;border:0.5px solid var(--border);border-radius:var(--r);background:none;font-family:inherit}
+.add-rule-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.add-rule-row input,.add-rule-row select{font-size:14px;padding:7px 8px;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--r);color:var(--text);outline:none;font-family:inherit}
+.add-rule-row input{flex:1;min-width:100px}
+.txn-empty{text-align:center;color:var(--text2);font-size:14px;padding:20px 0}
+
 /* iOS install hint */
 .install-hint{font-size:12px;color:var(--text2);text-align:center;padding:8px 16px;background:var(--bg2);border-radius:var(--r);margin-bottom:14px;display:none}
 .install-hint.show{display:block}
@@ -379,6 +416,45 @@ input:checked+.tslider::before{transform:translateX(18px)}
   <div class="cf-month-list" id="cf-month-list"></div>
 </div>
 
+<!-- ===== TRANSACTIONS TAB ===== -->
+<div id="tab-transactions" class="tab">
+  <div class="sec">
+    <div class="sec-title">This month vs budget</div>
+    <div id="txn-comparison"><div class="txn-empty">Sync your bank to see spending.</div></div>
+  </div>
+  <div class="sec" id="txn-pending-sec" style="display:none">
+    <div class="sec-title">Needs review <span class="badge badge-warn" id="txn-pending-count"></span></div>
+    <div id="txn-pending-list"></div>
+  </div>
+  <div class="sec">
+    <div class="sec-title">Transactions this month</div>
+    <div id="txn-history"><div class="txn-empty">No transactions yet.</div></div>
+  </div>
+  <div class="sec">
+    <div class="sec-title" style="display:flex;justify-content:space-between;align-items:center">
+      <span>Categorization rules</span>
+      <button onclick="toggleRules(this)" style="font-size:11px;padding:2px 10px;border-radius:20px;border:0.5px solid var(--border2);background:none;color:var(--text2);cursor:pointer;font-family:inherit">Manage</button>
+    </div>
+    <div id="rules-section" style="display:none;margin-top:10px">
+      <div class="rules-list" id="rules-list"></div>
+      <div class="add-rule-row">
+        <input type="text" id="r-pattern" placeholder="Merchant keyword (e.g. Kroger)">
+        <select id="r-cat">
+          <option value="">Category…</option>
+          <option value="groceries">Groceries</option>
+          <option value="gas">Gas</option>
+          <option value="takeout">Takeout</option>
+          <option value="beauty">Makeup &amp; Hair</option>
+          <option value="clothing">Clothing</option>
+          <option value="charity">Charitable giving</option>
+          <option value="misc">Other / Misc</option>
+        </select>
+        <button class="btn-add" onclick="addRule()">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== LEDGER TAB ===== -->
 <div id="tab-ledger" class="tab">
   <div class="ledger-this-note" id="ledger-note"></div>
@@ -409,6 +485,10 @@ input:checked+.tslider::before{transform:translateX(18px)}
   <button class="nav-btn" data-tab="ledger" onclick="showTab('ledger',this)">
     <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
     <span>Ledger</span>
+  </button>
+  <button class="nav-btn" data-tab="transactions" onclick="showTab('transactions',this)" id="txn-nav-btn">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    <span>Spending</span>
   </button>
 </nav>
 
@@ -826,6 +906,7 @@ function showTab(name, btn) {
   if (btn) btn.classList.add('active');
   document.getElementById('main-scroll').scrollTop = 0;
   if (name === 'cashflow') renderCashFlow();
+  if (name === 'transactions') loadTransactions().then(renderTransactionsTab);
 }
 
 // ── Scenario pills ─────────────────────────────────────────
@@ -847,6 +928,182 @@ document.querySelectorAll('.pill').forEach(p => {
     onSettingChange();
   });
 });
+
+// ── Transactions tab ───────────────────────────────────────
+const CAT_LABELS = { groceries:'Groceries', gas:'Gas', takeout:'Takeout', beauty:'Makeup & Hair', clothing:'Clothing', charity:'Charitable giving', misc:'Other / Misc' };
+const CAT_BUDGET = () => ({ groceries:S.grocer, gas:S.gas, takeout:S.takeout, beauty:S.beauty, clothing:S.clothes, charity:S.charity, misc:S.misc });
+const CAT_OPTIONS = Object.keys(CAT_LABELS).map(k => `<option value="${k}">${CAT_LABELS[k]}</option>`).join('');
+
+let txnCache = [];
+let rulesCache = [];
+
+async function loadTransactions() {
+  const { data: { user } } = await supa.auth.getUser();
+  if (!user) return;
+  const ym = ymNow();
+  const [{ data: txns }, { data: rules }] = await Promise.all([
+    supa.from('transactions').select('*').eq('user_id', user.id).gte('date', ym + '-01').lte('date', ym + '-31').neq('status', 'excluded').order('date', { ascending: false }),
+    supa.from('category_rules').select('*').eq('user_id', user.id).order('priority', { ascending: false }),
+  ]);
+  txnCache = txns || [];
+  rulesCache = rules || [];
+}
+
+function renderTransactionsTab() {
+  const ym = ymNow();
+  const approved = txnCache.filter(t => t.status === 'auto' || t.status === 'approved');
+  const pending  = txnCache.filter(t => t.status === 'pending');
+
+  // ── Comparison ──
+  const budgets = CAT_BUDGET();
+  const spent = {};
+  approved.forEach(t => { if (t.budget_category) spent[t.budget_category] = (spent[t.budget_category] || 0) + Number(t.amount); });
+
+  const compEl = document.getElementById('txn-comparison');
+  if (!approved.length && !pending.length) {
+    compEl.innerHTML = '<div class="txn-empty">Sync your bank to see spending.</div>';
+  } else {
+    compEl.innerHTML = Object.keys(CAT_LABELS).map(cat => {
+      const budget = budgets[cat] || 0;
+      const actual = spent[cat] || 0;
+      const ratio = budget > 0 ? Math.min(1, actual / budget) : 0;
+      const color = ratio >= 1 ? 'var(--red)' : ratio >= 0.8 ? '#EF9F27' : 'var(--green)';
+      return `<div class="txn-compare-row">
+        <div class="txn-compare-header">
+          <span class="cat-name">${CAT_LABELS[cat]}</span>
+          <span class="cat-amounts">${fmt(actual)} <span style="color:var(--text3)">/ ${fmt(budget)}</span></span>
+        </div>
+        <div class="txn-compare-bar"><div class="txn-compare-fill" style="width:${(ratio*100).toFixed(1)}%;background:${color}"></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  // ── Pending queue ──
+  const pendingSec = document.getElementById('txn-pending-sec');
+  const pendingList = document.getElementById('txn-pending-list');
+  document.getElementById('txn-pending-count').textContent = pending.length;
+  if (pending.length) {
+    pendingSec.style.display = '';
+    pendingList.innerHTML = pending.map(t => {
+      const day = new Date(t.date + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' });
+      return `<div class="pending-card" id="pc-${t.id}">
+        <div class="p-top">
+          <span class="p-merchant">${t.merchant_name || t.description}</span>
+          <span class="p-amt">-${fmt(t.amount)}</span>
+        </div>
+        <div class="p-meta">${day}${t.plaid_category ? ' · ' + t.plaid_category.replace(/_/g,' ').toLowerCase() : ''}</div>
+        <div class="p-actions">
+          <select class="cat-select" id="sel-${t.id}"><option value="">-- Select category --</option>${CAT_OPTIONS}</select>
+          <button class="btn-approve" onclick="approveTransaction('${t.id}')">Approve</button>
+          <button class="btn-exclude" onclick="excludeTransaction('${t.id}')">Skip</button>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    pendingSec.style.display = 'none';
+  }
+
+  // ── History by category ──
+  const histEl = document.getElementById('txn-history');
+  if (!approved.length) {
+    histEl.innerHTML = '<div class="txn-empty">No categorized transactions yet.</div>';
+  } else {
+    const groups = {};
+    approved.forEach(t => {
+      const cat = t.budget_category || 'misc';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(t);
+    });
+    histEl.innerHTML = Object.keys(groups).map(cat => {
+      const total = groups[cat].reduce((s,t) => s + Number(t.amount), 0);
+      const rows = groups[cat].map(t => {
+        const day = new Date(t.date + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' });
+        return `<div class="txn-row"><span class="t-date">${day}</span><span class="t-name">${t.merchant_name || t.description}</span><span class="t-amt">${fmt(t.amount)}</span></div>`;
+      }).join('');
+      return `<div class="txn-cat-group"><div class="txn-cat-header"><span>${CAT_LABELS[cat] || cat}</span><span>${fmt(total)}</span></div>${rows}</div>`;
+    }).join('');
+  }
+
+  renderRules();
+}
+
+async function approveTransaction(id) {
+  const sel = document.getElementById('sel-' + id);
+  const cat = sel?.value;
+  if (!cat) { sel.style.borderColor = 'var(--red)'; return; }
+  await supa.from('transactions').update({ budget_category: cat, status: 'approved' }).eq('id', id);
+  const txn = txnCache.find(t => t.id === id);
+  if (txn) { txn.budget_category = cat; txn.status = 'approved'; }
+
+  // Show rule prompt inside the card
+  const card = document.getElementById('pc-' + id);
+  const merchant = txn?.merchant_name || txn?.description || '';
+  card.querySelector('.p-actions').innerHTML =
+    `<div class="rule-prompt">
+      <span>Always categorize "<strong>${merchant}</strong>" as ${CAT_LABELS[cat]}?</span>
+      <button class="rp-yes" onclick="createRuleFromApproval('${merchant}','${cat}','${id}')">Yes</button>
+      <span class="rp-no" onclick="dismissCard('${id}')">No</span>
+    </div>`;
+}
+
+async function createRuleFromApproval(merchant, cat, txnId) {
+  const { data: { user } } = await supa.auth.getUser();
+  const rule = { user_id: user.id, match_field: 'merchant_name', pattern: merchant, budget_category: cat, priority: 10 };
+  const { data } = await supa.from('category_rules').insert(rule).select().single();
+  if (data) rulesCache.unshift(data);
+  dismissCard(txnId);
+}
+
+function dismissCard(id) {
+  const card = document.getElementById('pc-' + id);
+  if (card) card.remove();
+  const remaining = document.querySelectorAll('.pending-card').length;
+  if (!remaining) document.getElementById('txn-pending-sec').style.display = 'none';
+  renderTransactionsTab();
+}
+
+async function excludeTransaction(id) {
+  await supa.from('transactions').update({ status: 'excluded' }).eq('id', id);
+  txnCache = txnCache.filter(t => t.id !== id);
+  renderTransactionsTab();
+}
+
+function toggleRules(btn) {
+  const sec = document.getElementById('rules-section');
+  const open = sec.style.display !== 'none';
+  sec.style.display = open ? 'none' : '';
+  btn.textContent = open ? 'Manage' : 'Done';
+  if (!open) renderRules();
+}
+
+function renderRules() {
+  const list = document.getElementById('rules-list');
+  if (!rulesCache.length) { list.innerHTML = '<div style="font-size:13px;color:var(--text2);padding:4px 0">No rules yet. Approve a transaction to create one.</div>'; return; }
+  list.innerHTML = rulesCache.map(r =>
+    `<div class="rule-row">
+      <span class="r-pattern">${r.pattern}</span>
+      <span class="r-cat">→ ${CAT_LABELS[r.budget_category] || r.budget_category}</span>
+      <button class="r-del" onclick="deleteRule('${r.id}')">remove</button>
+    </div>`
+  ).join('');
+}
+
+async function addRule() {
+  const pattern = document.getElementById('r-pattern').value.trim();
+  const cat = document.getElementById('r-cat').value;
+  if (!pattern || !cat) return;
+  const { data: { user } } = await supa.auth.getUser();
+  const { data } = await supa.from('category_rules').insert({ user_id: user.id, match_field: 'merchant_name', pattern, budget_category: cat, priority: 10 }).select().single();
+  if (data) { rulesCache.unshift(data); renderRules(); }
+  document.getElementById('r-pattern').value = '';
+  document.getElementById('r-cat').value = '';
+}
+
+async function deleteRule(id) {
+  await supa.from('category_rules').delete().eq('id', id);
+  rulesCache = rulesCache.filter(r => r.id !== id);
+  renderRules();
+}
 
 // ── Plaid ──────────────────────────────────────────────────
 async function authHeader() {
@@ -908,6 +1165,7 @@ async function syncTransactions() {
   if (pending) parts.push(`${pending} need review`);
   statusEl.textContent = parts.length ? `Synced — ${parts.join(', ')}` : 'Up to date';
   statusEl.style.color = pending ? 'var(--amber-text)' : 'var(--green-text)';
+  await loadTransactions(); renderTransactionsTab();
 }
 
 // ── Init ───────────────────────────────────────────────────
@@ -941,6 +1199,7 @@ async function initApp() {
   renderLedger();
   calcBudget();
   loadBankStatus();
+  loadTransactions().then(renderTransactionsTab);
 }
 
 supa.auth.onAuthStateChange(async (event, session) => {
