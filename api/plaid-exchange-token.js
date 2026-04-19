@@ -1,5 +1,6 @@
 const { Configuration, PlaidApi, PlaidEnvironments } = require('plaid');
 const { createClient } = require('@supabase/supabase-js');
+const { encrypt } = require('./_crypto');
 
 const plaid = new PlaidApi(new Configuration({
   basePath: PlaidEnvironments[process.env.PLAID_ENV],
@@ -32,7 +33,7 @@ module.exports = async (req, res) => {
     const { data } = await plaid.itemPublicTokenExchange({ public_token });
     await supa.from('plaid_items').upsert({
       user_id: user.id,
-      access_token: data.access_token,
+      access_token: encrypt(data.access_token),
       item_id: data.item_id,
       institution_name: institution_name || 'Bank',
       cursor: null,

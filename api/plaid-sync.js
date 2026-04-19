@@ -1,5 +1,6 @@
 const { Configuration, PlaidApi, PlaidEnvironments } = require('plaid');
 const { createClient } = require('@supabase/supabase-js');
+const { decrypt } = require('./_crypto');
 
 const plaid = new PlaidApi(new Configuration({
   basePath: PlaidEnvironments[process.env.PLAID_ENV],
@@ -101,7 +102,7 @@ module.exports = async (req, res) => {
 
     while (hasMore) {
       const { data } = await plaid.transactionsSync({
-        access_token: item.access_token,
+        access_token: decrypt(item.access_token),
         cursor: cursor || undefined,
         options: { include_personal_finance_category: true },
       });
