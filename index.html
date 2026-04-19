@@ -355,6 +355,14 @@ input:checked+.tslider::before{transform:translateX(18px)}
     </div>
   </div>
 
+  <div class="sec">
+    <div class="sec-title">Bank connection</div>
+    <div id="bank-status" style="font-size:13px;color:var(--text2);padding:8px 0 10px">No bank connected.</div>
+    <button class="btn-add" id="btn-connect-bank" onclick="connectBank()" style="width:100%;margin-bottom:8px">Connect checking account</button>
+    <button class="btn-add" id="btn-sync" onclick="syncTransactions()" style="width:100%;background:var(--bg3);color:var(--text);display:none">Sync transactions</button>
+    <div id="sync-status" style="font-size:12px;color:var(--text2);margin-top:6px;display:none"></div>
+  </div>
+
   <div class="goal-box">
     <div class="g-title">Kitchen renovation</div>
     <div class="goal-row"><label>Goal ($)</label><input type="number" id="s-renogoal" inputmode="numeric" value="30000" min="5000" max="100000" step="1000"></div>
@@ -404,6 +412,7 @@ input:checked+.tslider::before{transform:translateX(18px)}
   </button>
 </nav>
 
+<script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
@@ -839,6 +848,68 @@ document.querySelectorAll('.pill').forEach(p => {
   });
 });
 
+// ── Plaid ──────────────────────────────────────────────────
+async function authHeader() {
+  const { data: { session } } = await supa.auth.getSession();
+  return { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' };
+}
+
+async function loadBankStatus() {
+  const { data: { user } } = await supa.auth.getUser();
+  if (!user) return;
+  const { data: items } = await supa.from('plaid_items').select('institution_name').eq('user_id', user.id);
+  const statusEl = document.getElementById('bank-status');
+  const syncBtn = document.getElementById('btn-sync');
+  if (items?.length) {
+    const names = items.map(i => i.institution_name).join(', ');
+    statusEl.textContent = `Connected: ${names}`;
+    statusEl.style.color = 'var(--green-text)';
+    syncBtn.style.display = '';
+  } else {
+    statusEl.textContent = 'No bank connected.';
+    statusEl.style.color = 'var(--text2)';
+    syncBtn.style.display = 'none';
+  }
+}
+
+async function connectBank() {
+  const headers = await authHeader();
+  const r = await fetch('/api/plaid-link-token', { method: 'POST', headers });
+  const { link_token, error } = await r.json();
+  if (error) { alert('Could not start bank connection: ' + error); return; }
+
+  const handler = Plaid.create({
+    token: link_token,
+    onSuccess: async (public_token, metadata) => {
+      const headers2 = await authHeader();
+      await fetch('/api/plaid-exchange-token', {
+        method: 'POST', headers: headers2,
+        body: JSON.stringify({ public_token, institution_name: metadata.institution?.name }),
+      });
+      await loadBankStatus();
+      await syncTransactions();
+    },
+    onExit: (err) => { if (err) console.error('Plaid exit error:', err); },
+  });
+  handler.open();
+}
+
+async function syncTransactions() {
+  const statusEl = document.getElementById('sync-status');
+  statusEl.style.display = '';
+  statusEl.textContent = 'Syncing…';
+  statusEl.style.color = 'var(--text2)';
+  const headers = await authHeader();
+  const r = await fetch('/api/plaid-sync', { method: 'POST', headers });
+  const { added, pending, error } = await r.json();
+  if (error) { statusEl.textContent = 'Sync failed: ' + error; statusEl.style.color = 'var(--red-text)'; return; }
+  const parts = [];
+  if (added) parts.push(`${added} categorized`);
+  if (pending) parts.push(`${pending} need review`);
+  statusEl.textContent = parts.length ? `Synced — ${parts.join(', ')}` : 'Up to date';
+  statusEl.style.color = pending ? 'var(--amber-text)' : 'var(--green-text)';
+}
+
 // ── Init ───────────────────────────────────────────────────
 function bindAllInputs() {
   bindInput('s-salary',   'salary',    'num');
@@ -869,6 +940,7 @@ async function initApp() {
   onSettingChange();
   renderLedger();
   calcBudget();
+  loadBankStatus();
 }
 
 supa.auth.onAuthStateChange(async (event, session) => {
